@@ -15,16 +15,6 @@ export default function HabitCard({
     onToggle();
   }
 
-  const cardStyle = isCompleted ? {
-    background: theme.doneBg,
-    border: `1px solid ${theme.doneBorder}`,
-    boxShadow: '0 2px 16px rgba(59,130,246,0.1)',
-  } : {
-    background: theme.card,
-    border: `1px solid ${isOver ? 'rgba(59,130,246,0.5)' : theme.border}`,
-    boxShadow: theme.shadow,
-  };
-
   return (
     <div
       onClick={onPress}
@@ -35,11 +25,19 @@ export default function HabitCard({
       onDragEnd={onDragEnd}
       className="rounded-2xl px-4 py-4 flex items-center gap-3 transition-all duration-200 select-none"
       style={{
-        ...cardStyle,
+        background: isCompleted ? theme.doneBg : theme.card,
+        border: isOver
+          ? '2px solid #3b82f6'
+          : isCompleted
+            ? `1px solid ${theme.doneBorder}`
+            : `1px solid ${theme.border}`,
+        boxShadow: isOver
+          ? '0 0 0 3px rgba(59,130,246,0.12)'
+          : isCompleted
+            ? '0 2px 16px rgba(59,130,246,0.1)'
+            : theme.shadow,
         opacity: isDragging ? 0.4 : 1,
         cursor: draggable ? 'grab' : 'pointer',
-        borderTopWidth: isOver ? '3px' : '1px',
-        borderTopColor: isOver ? '#3b82f6' : undefined,
       }}
     >
       {/* Drag grip */}

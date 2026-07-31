@@ -172,10 +172,20 @@ const PRESETS = [
   ]},
 ];
 
+const FREQ_OPTIONS = [
+  { key: 'daily',    label: 'يومياً',         days: [0,1,2,3,4,5,6] },
+  { key: 'weekdays', label: 'أيام العمل',     days: [1,2,3,4,5] },
+  { key: 'weekend',  label: 'عطلة',           days: [0,6] },
+  { key: 'custom',   label: 'مخصص',           days: [] },
+];
+const DAY_LABELS = ['ح','ن','ث','ر','خ','ج','س'];
+
 export default function AddHabitScreen({ onSave, onBack, theme }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(ICONS[0].e);
   const [openCats, setOpenCats] = useState(new Set());
+  const [freq, setFreq] = useState('daily');
+  const [customDays, setCustomDays] = useState([0,1,2,3,4,5,6]);
 
   const q = name.trim();
   const filteredPresets = q
@@ -198,9 +208,23 @@ export default function AddHabitScreen({ onSave, onBack, theme }) {
     setIcon(preset.icon);
   }
 
+  function handleFreqChange(key) {
+    setFreq(key);
+    if (key !== 'custom') {
+      setCustomDays(FREQ_OPTIONS.find(f => f.key === key).days);
+    }
+  }
+
+  function toggleCustomDay(d) {
+    setCustomDays(prev =>
+      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d].sort((a, b) => a - b)
+    );
+  }
+
   function handleSave() {
     if (!q) return;
-    onSave(q, icon);
+    const freqDays = freq === 'custom' ? customDays : FREQ_OPTIONS.find(f => f.key === freq).days;
+    onSave(q, icon, freq === 'custom' ? 'custom' : freq, freqDays);
   }
 
   return (
@@ -268,6 +292,47 @@ export default function AddHabitScreen({ onSave, onBack, theme }) {
       {/* المحتوى القابل للسكرول */}
       <div className="flex-1 overflow-y-auto px-5 pb-4">
 
+        {/* Frequency */}
+        <div className="pt-3 pb-1">
+          <p className="text-xs font-semibold mb-2" style={{ color: theme.t3 }}>تكرار العادة</p>
+          <div className="flex gap-2 flex-wrap">
+            {FREQ_OPTIONS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleFreqChange(key)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                style={freq === key ? {
+                  background: '#3b82f6', color: 'white', border: '1.5px solid #3b82f6',
+                } : {
+                  background: theme.card, color: theme.t2, border: `1px solid ${theme.border}`,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {freq === 'custom' && (
+            <div className="flex gap-2 mt-2">
+              {DAY_LABELS.map((d, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleCustomDay(i)}
+                  className="w-8 h-8 rounded-full text-xs font-bold transition-all"
+                  style={customDays.includes(i) ? {
+                    background: '#3b82f6', color: 'white',
+                  } : {
+                    background: theme.elevated, color: theme.t2, border: `1px solid ${theme.border}`,
+                  }}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* اقتراحات */}
         <div className="pt-3">
           <p className="text-xs font-semibold mb-3" style={{ color: theme.t3 }}>
@@ -303,8 +368,7 @@ export default function AddHabitScreen({ onSave, onBack, theme }) {
                       <span className="text-sm font-semibold" style={{ color: theme.t1 }}>{cat}</span>
                       <span
                         className="text-lg transition-transform duration-200"
-                        style={{ color: theme.t3 }}
-                        style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                        style={{ color: theme.t3, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
                       >›</span>
                     </button>
                   )}
@@ -346,9 +410,9 @@ export default function AddHabitScreen({ onSave, onBack, theme }) {
         <div className="mt-2">
           <p className="text-xs font-semibold mb-3" style={{ color: theme.t3 }}>الأيقونة</p>
           <div className="grid grid-cols-4 gap-2">
-            {ICONS.map(({ e, l }) => (
+            {ICONS.map(({ e, l }, idx) => (
               <button
-                key={e}
+                key={`${e}-${idx}`}
                 type="button"
                 onClick={() => setIcon(e)}
                 className="py-3 rounded-xl flex flex-col items-center justify-center gap-1 transition-all active:scale-90"

@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useAuth } from './hooks/useAuth';
 import { useHabits } from './hooks/useHabits';
+import AuthScreen from './components/AuthScreen';
 import HomeScreen from './components/HomeScreen';
 import AddHabitScreen from './components/AddHabitScreen';
 import HabitDetailScreen from './components/HabitDetailScreen';
@@ -21,10 +23,11 @@ export default function App() {
     });
   }
 
-  const { habits, loading, addHabit, toggleToday, deleteHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount } = useHabits();
+  const { user, authLoading, signOut } = useAuth();
+  const { habits, loading, addHabit, toggleToday, saveNote, deleteHabit, archiveHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount } = useHabits(user?.id);
 
-  function handleSave(name, icon) {
-    addHabit(name, icon);
+  function handleSave(name, icon, frequency, frequencyDays) {
+    addHabit(name, icon, frequency, frequencyDays);
     setView('home');
   }
 
@@ -39,7 +42,26 @@ export default function App() {
     setView('home');
   }
 
+  function handleArchive(id) {
+    archiveHabit(id);
+    setSelectedId(null);
+    setView('home');
+  }
+
   const selected = habits.find(h => h.id === selectedId);
+
+  if (authLoading) return (
+    <div dir="rtl" className="font-cairo min-h-screen flex items-center justify-center" style={{ background: theme.bg }}>
+      <div className="flex flex-col items-center gap-3">
+        <div className="text-4xl animate-pulse">🌱</div>
+        <p className="text-sm" style={{ color: theme.t2 }}>جار التحميل…</p>
+      </div>
+    </div>
+  );
+
+  if (!user) return (
+    <AuthScreen isDark={isDark} onToggleTheme={toggleTheme} />
+  );
 
   if (loading) return (
     <div dir="rtl" className="font-cairo min-h-screen flex items-center justify-center" style={{ background: theme.bg }}>
@@ -80,7 +102,9 @@ export default function App() {
             habit={selected}
             isCompletedToday={isCompletedToday(selected)}
             onToggle={() => toggleToday(selected.id)}
+            onSaveNote={(note) => saveNote(selected.id, note)}
             onDelete={() => handleDelete(selected.id)}
+            onArchive={() => handleArchive(selected.id)}
             onRename={(newName) => renameHabit(selected.id, newName)}
             onBack={() => setView('home')}
             theme={theme}
@@ -90,6 +114,7 @@ export default function App() {
           <StatsScreen
             habits={habits}
             onBack={() => setView('home')}
+            onSignOut={signOut}
             theme={theme}
           />
         )}
