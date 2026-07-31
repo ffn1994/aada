@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export default function HabitCard({
-  habit, isCompleted, onToggle, onPress, theme,
+  habit, isCompleted, isScheduled, onToggle, onPress, theme,
   draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, isOver,
 }) {
   const [popping, setPopping] = useState(false);
@@ -36,7 +36,7 @@ export default function HabitCard({
           : isCompleted
             ? '0 2px 16px rgba(59,130,246,0.1)'
             : theme.shadow,
-        opacity: isDragging ? 0.4 : 1,
+        opacity: isDragging ? 0.4 : isScheduled === false ? 0.45 : 1,
         cursor: draggable ? 'grab' : 'pointer',
       }}
     >
@@ -66,9 +66,11 @@ export default function HabitCard({
           {habit.name}
         </p>
         <p className="text-xs mt-0.5">
-          {habit.streak > 0
-            ? <span className="text-amber-500">🔥 {habit.streak} {habit.streak === 1 ? 'يوم متتالٍ' : 'أيام متتالية'}</span>
-            : <span style={{ color: theme.t3 }}>ابدأ اليوم!</span>
+          {isScheduled === false
+            ? <span style={{ color: theme.t3 }}>⏸ ليس مجدولاً اليوم</span>
+            : habit.streak > 0
+              ? <span className="text-amber-500">🔥 {habit.streak} {habit.streak === 1 ? 'يوم متتالٍ' : 'أيام متتالية'}</span>
+              : <span style={{ color: theme.t3 }}>ابدأ اليوم!</span>
           }
         </p>
       </div>

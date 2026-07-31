@@ -113,12 +113,21 @@ export function useHabits(userId) {
     );
   }
 
+  function isScheduledToday(habit) {
+    const day = new Date().getDay(); // 0=Sun … 6=Sat
+    return (habit.frequencyDays ?? [0,1,2,3,4,5,6]).includes(day);
+  }
+
   function isCompletedToday(habit) {
     return (habit.completedDates ?? []).includes(getToday());
   }
 
   function getCompletedCount() {
-    return habits.filter(isCompletedToday).length;
+    return habits.filter(h => isScheduledToday(h) && isCompletedToday(h)).length;
+  }
+
+  function getScheduledCount() {
+    return habits.filter(isScheduledToday).length;
   }
 
   return {
@@ -126,6 +135,6 @@ export function useHabits(userId) {
     addHabit, toggleToday, saveNote,
     deleteHabit, archiveHabit,
     renameHabit, reorderHabits,
-    isCompletedToday, getCompletedCount,
+    isCompletedToday, isScheduledToday, getCompletedCount, getScheduledCount,
   };
 }

@@ -24,7 +24,7 @@ export default function App() {
   }
 
   const { user, authLoading, signOut } = useAuth();
-  const { habits, loading, addHabit, toggleToday, saveNote, deleteHabit, archiveHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount } = useHabits(user?.id);
+  const { habits, loading, addHabit, toggleToday, saveNote, deleteHabit, archiveHabit, renameHabit, reorderHabits, isCompletedToday, isScheduledToday, getCompletedCount, getScheduledCount } = useHabits(user?.id);
 
   function handleSave(name, icon, frequency, frequencyDays) {
     addHabit(name, icon, frequency, frequencyDays);
@@ -79,8 +79,10 @@ export default function App() {
           <HomeScreen
             habits={habits}
             completedCount={getCompletedCount()}
+            scheduledCount={getScheduledCount()}
             onToggle={toggleToday}
             isCompletedToday={isCompletedToday}
+            isScheduledToday={isScheduledToday}
             onSelectHabit={handleSelect}
             onAddHabit={() => setView('add')}
             onOpenStats={() => setView('stats')}

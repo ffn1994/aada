@@ -45,13 +45,13 @@ function CelebrationParticle({ emoji, style }) {
 }
 
 export default function HomeScreen({
-  habits, completedCount, onToggle, isCompletedToday,
+  habits, completedCount, scheduledCount, onToggle, isCompletedToday, isScheduledToday,
   onSelectHabit, onAddHabit, onOpenStats, onReorder,
   theme, isDark, onToggleTheme,
 }) {
   const total = habits.length;
-  const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-  const allDone = total > 0 && completedCount === total;
+  const pct = scheduledCount > 0 ? Math.round((completedCount / scheduledCount) * 100) : 0;
+  const allDone = scheduledCount > 0 && completedCount === scheduledCount;
   const { text, emoji } = greeting();
 
   const [dragIdx, setDragIdx] = useState(null);
@@ -213,9 +213,9 @@ export default function HomeScreen({
               </>
             ) : (
               <>
-                <p className="font-semibold text-sm" style={{ color: theme.t1 }}>{completedCount} من {total} عادات</p>
+                <p className="font-semibold text-sm" style={{ color: theme.t1 }}>{completedCount} من {scheduledCount} عادات</p>
                 <p className="text-xs mt-1" style={{ color: theme.t2 }}>
-                  {total - completedCount === 1 ? 'عادة واحدة متبقية' : `${total - completedCount} عادات متبقية`}
+                  {scheduledCount - completedCount === 1 ? 'عادة واحدة متبقية' : `${scheduledCount - completedCount} عادات متبقية`}
                 </p>
               </>
             )}
@@ -249,6 +249,7 @@ export default function HomeScreen({
                 key={habit.id}
                 habit={habit}
                 isCompleted={isCompletedToday(habit)}
+                isScheduled={isScheduledToday(habit)}
                 onToggle={() => onToggle(habit.id)}
                 onPress={() => onSelectHabit(habit.id)}
                 theme={theme}
