@@ -21,7 +21,7 @@ export default function App() {
     });
   }
 
-  const { habits, addHabit, toggleToday, deleteHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount } = useHabits();
+  const { habits, loading, addHabit, toggleToday, deleteHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount } = useHabits();
 
   function handleSave(name, icon) {
     addHabit(name, icon);
@@ -40,6 +40,15 @@ export default function App() {
   }
 
   const selected = habits.find(h => h.id === selectedId);
+
+  if (loading) return (
+    <div dir="rtl" className="font-cairo min-h-screen flex items-center justify-center" style={{ background: theme.bg }}>
+      <div className="flex flex-col items-center gap-3">
+        <div className="text-4xl animate-pulse">🌱</div>
+        <p className="text-sm" style={{ color: theme.t2 }}>جار التحميل…</p>
+      </div>
+    </div>
+  );
 
   return (
     <div dir="rtl" className="font-cairo min-h-screen" style={{ background: theme.bg }}>

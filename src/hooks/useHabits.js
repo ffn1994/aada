@@ -1,91 +1,96 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { getToday, calcStreak } from '../utils/dateUtils';
 
-const KEY = 'habit-tracker-v1';
-
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function save(habits) {
-  localStorage.setItem(KEY, JSON.stringify(habits));
-}
-
-function recompute(habit, dates) {
-  const streak = calcStreak(dates);
+function toLocal(row) {
   return {
-    ...habit,
-    completedDates: dates,
-    streak,
-    longestStreak: Math.max(streak, habit.longestStreak || 0),
+    id: row.id,
+    name: row.name,
+    icon: row.icon,
+    streak: row.streak ?? 0,
+    longestStreak: row.longest_streak ?? 0,
+    completedDates: row.completed_dates ?? [],
+    createdAt: row.created_at,
+    orderIndex: row.order_index ?? 0,
   };
 }
 
 export function useHabits() {
-  const [habits, setHabits] = useState(load);
+  const [habits, setHabits] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    save(habits);
-  }, [habits]);
+  useEffect(() => { load(); }, []);
 
-  function addHabit(name, icon) {
-    const h = {
-      id: String(Date.now()),
-      name,
-      icon,
-      streak: 0,
-      longestStreak: 0,
-      completedDates: [],
-      createdAt: new Date().toISOString(),
-    };
-    setHabits(prev => [...prev, h]);
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase
+      .from('habits')
+      .select('*')
+      .order('order_index', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (data) setHabits(data.map(toLocal));
+    setLoading(false);
   }
 
-  function toggleToday(id) {
+  async function addHabit(name, icon) {
+    const { data } = await supabase
+      .from('habits')
+      .insert({ name, icon, order_index: habits.length })
+      .select()
+      .single();
+    if (data) setHabits(prev => [...prev, toLocal(data)]);
+  }
+
+  async function toggleToday(id) {
     const today = getToday();
-    setHabits(prev =>
-      prev.map(h => {
-        if (h.id !== id) return h;
-        const dates = h.completedDates || [];
-        const newDates = dates.includes(today)
-          ? dates.filter(d => d !== today)
-          : [...dates, today].sort();
-        return recompute(h, newDates);
-      })
-    );
+    const habit = habits.find(h => h.id === id);
+    const dates = habit.completedDates ?? [];
+    const newDates = dates.includes(today)
+      ? dates.filter(d => d !== today)
+      : [...dates, today].sort();
+    const streak = calcStreak(newDates);
+    const longestStreak = Math.max(streak, habit.longestStreak ?? 0);
+
+    setHabits(prev => prev.map(h =>
+      h.id === id ? { ...h, completedDates: newDates, streak, longestStreak } : h
+    ));
+
+    await supabase.from('habits').update({
+      completed_dates: newDates,
+      streak,
+      longest_streak: longestStreak,
+    }).eq('id', id);
   }
 
-  function deleteHabit(id) {
+  async function deleteHabit(id) {
     setHabits(prev => prev.filter(h => h.id !== id));
+    await supabase.from('habits').delete().eq('id', id);
   }
 
-  function reorderHabits(fromIndex, toIndex) {
-    setHabits(prev => {
-      const next = [...prev];
-      const [removed] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, removed);
-      return next;
-    });
-  }
-
-  function renameHabit(id, newName) {
+  async function renameHabit(id, newName) {
     const trimmed = newName.trim();
     if (!trimmed) return;
     setHabits(prev => prev.map(h => h.id === id ? { ...h, name: trimmed } : h));
+    await supabase.from('habits').update({ name: trimmed }).eq('id', id);
+  }
+
+  async function reorderHabits(fromIndex, toIndex) {
+    const next = [...habits];
+    const [removed] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, removed);
+    setHabits(next);
+    await Promise.all(
+      next.map((h, i) => supabase.from('habits').update({ order_index: i }).eq('id', h.id))
+    );
   }
 
   function isCompletedToday(habit) {
-    return (habit.completedDates || []).includes(getToday());
+    return (habit.completedDates ?? []).includes(getToday());
   }
 
   function getCompletedCount() {
     return habits.filter(isCompletedToday).length;
   }
 
-  return { habits, addHabit, toggleToday, deleteHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount };
+  return { habits, loading, addHabit, toggleToday, deleteHabit, renameHabit, reorderHabits, isCompletedToday, getCompletedCount };
 }
