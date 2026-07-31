@@ -55,7 +55,7 @@ export default function AuthScreen({ isDark, onToggleTheme }) {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 56, marginBottom: 12, lineHeight: 1 }}>🌱</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: theme.t1, margin: 0 }}>تتبع العادات</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: theme.t1, margin: 0 }}>aada</h1>
           <p style={{ fontSize: 13, color: theme.t2, marginTop: 6 }}>ابنِ عاداتك، غيّر حياتك</p>
         </div>
 
