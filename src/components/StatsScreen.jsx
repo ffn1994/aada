@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getLast7Days, getArabicShortDay, getToday } from '../utils/dateUtils';
 
 function WeekGrid({ habit, last7, today }) {
@@ -79,9 +80,19 @@ function exportCSV(habits) {
   URL.revokeObjectURL(url);
 }
 
-export default function StatsScreen({ habits, onBack, onSignOut, theme }) {
+export default function StatsScreen({ habits, archivedHabits = [], onLoadArchived, onRestoreHabit, onBack, onSignOut, theme }) {
   const last7 = getLast7Days();
   const today = getToday();
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedLoaded, setArchivedLoaded] = useState(false);
+
+  async function handleShowArchived() {
+    if (!archivedLoaded) {
+      await onLoadArchived?.();
+      setArchivedLoaded(true);
+    }
+    setShowArchived(v => !v);
+  }
 
   const totalHabits = habits.length;
   const doneToday = habits.filter(h => (h.completedDates || []).includes(today)).length;
@@ -206,6 +217,41 @@ export default function StatsScreen({ habits, onBack, onSignOut, theme }) {
             </div>
           </>
         )}
+        {/* Archived habits */}
+        <div className="mt-6">
+          <button
+            onClick={handleShowArchived}
+            className="w-full py-3 rounded-2xl text-sm font-semibold transition-all"
+            style={{ background: showArchived ? 'rgba(245,158,11,0.1)' : theme.card, color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', boxShadow: theme.shadow }}
+          >
+            📦 {showArchived ? 'إخفاء' : 'عرض'} العادات المؤرشفة {archivedLoaded && archivedHabits.length > 0 ? `(${archivedHabits.length})` : ''}
+          </button>
+
+          {showArchived && (
+            <div className="mt-3 flex flex-col gap-3">
+              {archivedHabits.length === 0 ? (
+                <p className="text-center py-6 text-sm" style={{ color: theme.t3 }}>لا توجد عادات مؤرشفة</p>
+              ) : archivedHabits.map(habit => (
+                <div key={habit.id} className="rounded-2xl p-4 flex items-center gap-3"
+                  style={{ background: theme.card, border: `1px solid ${theme.border}`, opacity: 0.8 }}>
+                  <span className="text-2xl">{habit.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate" style={{ color: theme.t1 }}>{habit.name}</p>
+                    <p className="text-xs" style={{ color: theme.t2 }}>
+                      🔥 {habit.streak} · إجمالي {habit.completedDates?.length ?? 0} يوم
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onRestoreHabit?.(habit.id)}
+                    className="text-xs px-3 py-1.5 rounded-xl font-semibold shrink-0"
+                    style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.25)' }}
+                  >استعادة</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

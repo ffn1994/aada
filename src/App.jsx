@@ -24,7 +24,13 @@ export default function App() {
   }
 
   const { user, authLoading, signOut } = useAuth();
-  const { habits, loading, addHabit, toggleToday, saveNote, deleteHabit, archiveHabit, renameHabit, reorderHabits, isCompletedToday, isScheduledToday, getCompletedCount, getScheduledCount } = useHabits(user?.id);
+  const {
+    habits, archivedHabits, loading,
+    addHabit, toggleToday, saveNote,
+    deleteHabit, archiveHabit, restoreHabit, loadArchived,
+    renameHabit, updateFrequency, reorderHabits,
+    isCompletedToday, isScheduledToday, getCompletedCount, getScheduledCount,
+  } = useHabits(user?.id);
 
   function handleSave(name, icon, frequency, frequencyDays) {
     addHabit(name, icon, frequency, frequencyDays);
@@ -108,6 +114,7 @@ export default function App() {
             onDelete={() => handleDelete(selected.id)}
             onArchive={() => handleArchive(selected.id)}
             onRename={(newName) => renameHabit(selected.id, newName)}
+            onUpdateFrequency={(freq, days) => updateFrequency(selected.id, freq, days)}
             onBack={() => setView('home')}
             theme={theme}
           />
@@ -115,6 +122,9 @@ export default function App() {
         {view === 'stats' && (
           <StatsScreen
             habits={habits}
+            archivedHabits={archivedHabits}
+            onLoadArchived={loadArchived}
+            onRestoreHabit={restoreHabit}
             onBack={() => setView('home')}
             onSignOut={signOut}
             theme={theme}

@@ -21,11 +21,12 @@ function toLocal(row) {
 
 export function useHabits(userId) {
   const [habits, setHabits] = useState([]);
+  const [archivedHabits, setArchivedHabits] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (userId) load();
-    else { setHabits([]); setLoading(false); }
+    else { setHabits([]); setArchivedHabits([]); setLoading(false); }
   }, [userId]);
 
   async function load() {
@@ -38,6 +39,21 @@ export function useHabits(userId) {
       .order('created_at', { ascending: true });
     if (data) setHabits(data.map(toLocal));
     setLoading(false);
+  }
+
+  async function loadArchived() {
+    const { data } = await supabase
+      .from('habits')
+      .select('*')
+      .eq('archived', true)
+      .order('created_at', { ascending: false });
+    if (data) setArchivedHabits(data.map(toLocal));
+  }
+
+  async function restoreHabit(id) {
+    setArchivedHabits(prev => prev.filter(h => h.id !== id));
+    await supabase.from('habits').update({ archived: false }).eq('id', id);
+    load();
   }
 
   async function addHabit(name, icon, frequency = 'daily', frequencyDays = [0, 1, 2, 3, 4, 5, 6]) {
@@ -62,7 +78,7 @@ export function useHabits(userId) {
     const newDates = dates.includes(today)
       ? dates.filter(d => d !== today)
       : [...dates, today].sort();
-    const streak = calcStreak(newDates);
+    const streak = calcStreak(newDates, habit.frequencyDays);
     const longestStreak = Math.max(streak, habit.longestStreak ?? 0);
 
     setHabits(prev => prev.map(h =>
@@ -94,6 +110,11 @@ export function useHabits(userId) {
   async function archiveHabit(id) {
     setHabits(prev => prev.filter(h => h.id !== id));
     await supabase.from('habits').update({ archived: true }).eq('id', id);
+  }
+
+  async function updateFrequency(id, frequency, frequencyDays) {
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, frequency, frequencyDays } : h));
+    await supabase.from('habits').update({ frequency, frequency_days: frequencyDays }).eq('id', id);
   }
 
   async function renameHabit(id, newName) {
@@ -131,10 +152,10 @@ export function useHabits(userId) {
   }
 
   return {
-    habits, loading,
+    habits, archivedHabits, loading,
     addHabit, toggleToday, saveNote,
-    deleteHabit, archiveHabit,
-    renameHabit, reorderHabits,
+    deleteHabit, archiveHabit, restoreHabit, loadArchived,
+    renameHabit, updateFrequency, reorderHabits,
     isCompletedToday, isScheduledToday, getCompletedCount, getScheduledCount,
   };
 }

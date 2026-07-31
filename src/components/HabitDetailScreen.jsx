@@ -2,13 +2,22 @@ import { useState } from 'react';
 import { getToday, getDaysInMonth, getFirstDayOfMonth, formatMonthYear } from '../utils/dateUtils';
 
 const WEEKDAYS = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
+const FREQ_OPTIONS = [
+  { key: 'daily',    label: 'يومياً',     days: [0,1,2,3,4,5,6] },
+  { key: 'weekdays', label: 'أيام العمل', days: [1,2,3,4,5] },
+  { key: 'weekend',  label: 'عطلة',       days: [0,6] },
+  { key: 'custom',   label: 'مخصص',       days: [] },
+];
 
-export default function HabitDetailScreen({ habit, isCompletedToday, onToggle, onSaveNote, onDelete, onArchive, onRename, onBack, theme }) {
+export default function HabitDetailScreen({ habit, isCompletedToday, onToggle, onSaveNote, onDelete, onArchive, onRename, onUpdateFrequency, onBack, theme }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(habit.name);
   const [noteInput, setNoteInput] = useState(habit.completionNotes?.[getToday()] ?? '');
   const [noteSaved, setNoteSaved] = useState(false);
+  const [editingFreq, setEditingFreq] = useState(false);
+  const [freqKey, setFreqKey] = useState(habit.frequency ?? 'daily');
+  const [freqDays, setFreqDays] = useState(habit.frequencyDays ?? [0,1,2,3,4,5,6]);
 
   function saveRename() {
     if (nameInput.trim()) onRename(nameInput.trim());
@@ -19,6 +28,21 @@ export default function HabitDetailScreen({ habit, isCompletedToday, onToggle, o
     onSaveNote(noteInput.trim());
     setNoteSaved(true);
     setTimeout(() => setNoteSaved(false), 2000);
+  }
+
+  function handleFreqChange(key) {
+    setFreqKey(key);
+    if (key !== 'custom') setFreqDays(FREQ_OPTIONS.find(f => f.key === key).days);
+  }
+
+  function toggleFreqDay(d) {
+    setFreqDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d].sort((a,b) => a-b));
+  }
+
+  function saveFrequency() {
+    const days = freqKey === 'custom' ? freqDays : FREQ_OPTIONS.find(f => f.key === freqKey).days;
+    onUpdateFrequency(freqKey, days);
+    setEditingFreq(false);
   }
 
   const now = new Date();
@@ -115,6 +139,54 @@ export default function HabitDetailScreen({ habit, isCompletedToday, onToggle, o
         >
           {isCompletedToday ? '✓ مكتمل اليوم — اضغط للإلغاء' : '◉ تأشير كمكتمل اليوم'}
         </button>
+
+        {/* Frequency editor */}
+        <div className="mb-4 rounded-2xl p-4" style={{ background: theme.card, border: `1px solid ${theme.border}`, boxShadow: theme.shadow }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold" style={{ color: theme.t2 }}>🔁 التكرار</p>
+            {!editingFreq ? (
+              <button
+                onClick={() => setEditingFreq(true)}
+                className="text-xs px-3 py-1 rounded-lg"
+                style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}
+              >تعديل</button>
+            ) : (
+              <div className="flex gap-2">
+                <button onClick={() => setEditingFreq(false)} className="text-xs px-3 py-1 rounded-lg" style={{ background: theme.elevated, color: theme.t2 }}>إلغاء</button>
+                <button onClick={saveFrequency} className="text-xs px-3 py-1 rounded-lg font-bold" style={{ background: '#3b82f6', color: 'white' }}>حفظ</button>
+              </div>
+            )}
+          </div>
+          {!editingFreq ? (
+            <p className="text-sm font-medium" style={{ color: theme.t1 }}>
+              {FREQ_OPTIONS.find(f => f.key === (habit.frequency ?? 'daily'))?.label ?? 'يومياً'}
+              {habit.frequency === 'custom' && habit.frequencyDays && (
+                <span style={{ color: theme.t2, fontSize: 11 }}> — {habit.frequencyDays.map(d => WEEKDAYS[d]).join(' ')}</span>
+              )}
+            </p>
+          ) : (
+            <div>
+              <div className="flex gap-2 flex-wrap mb-2">
+                {FREQ_OPTIONS.map(({ key, label }) => (
+                  <button key={key} onClick={() => handleFreqChange(key)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                    style={freqKey === key ? { background: '#3b82f6', color: 'white' } : { background: theme.elevated, color: theme.t2, border: `1px solid ${theme.border}` }}
+                  >{label}</button>
+                ))}
+              </div>
+              {freqKey === 'custom' && (
+                <div className="flex gap-2 mt-1">
+                  {WEEKDAYS.map((d, i) => (
+                    <button key={i} onClick={() => toggleFreqDay(i)}
+                      className="w-8 h-8 rounded-full text-xs font-bold transition-all"
+                      style={freqDays.includes(i) ? { background: '#3b82f6', color: 'white' } : { background: theme.elevated, color: theme.t2, border: `1px solid ${theme.border}` }}
+                    >{d}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Note for today */}
         {isCompletedToday && (

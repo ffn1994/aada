@@ -24,26 +24,33 @@ export function formatArabicDate() {
   });
 }
 
-export function calcStreak(completedDates) {
+export function calcStreak(completedDates, frequencyDays = [0, 1, 2, 3, 4, 5, 6]) {
   if (!completedDates || completedDates.length === 0) return 0;
 
-  const sorted = [...completedDates].sort().reverse();
+  const doneSet = new Set(completedDates);
   const todayStr = getToday();
-  const yestStr = getYesterday();
 
-  if (sorted[0] !== todayStr && sorted[0] !== yestStr) return 0;
+  let streak = 0;
+  const cursor = new Date(todayStr + 'T12:00:00');
 
-  let streak = 1;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const a = new Date(sorted[i] + 'T12:00:00');
-    const b = new Date(sorted[i + 1] + 'T12:00:00');
-    const diff = Math.round((a - b) / 86400000);
-    if (diff === 1) {
-      streak++;
-    } else {
-      break;
+  for (let i = 0; i < 1000; i++) {
+    const ds = cursor.toISOString().slice(0, 10);
+    const dow = cursor.getDay();
+
+    if (frequencyDays.includes(dow)) {
+      if (doneSet.has(ds)) {
+        streak++;
+      } else if (ds === todayStr) {
+        // today scheduled but not done yet — don't penalise
+      } else {
+        break; // missed a scheduled day
+      }
     }
+    // non-scheduled days are transparent — just skip
+
+    cursor.setDate(cursor.getDate() - 1);
   }
+
   return streak;
 }
 

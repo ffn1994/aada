@@ -10,6 +10,7 @@ export default function AuthScreen({ isDark, onToggleTheme }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const [showPw, setShowPw] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -102,20 +103,34 @@ export default function AuthScreen({ isDark, onToggleTheme }) {
             {/* Password */}
             <div style={{ marginBottom: 20 }}>
               <label style={{ fontSize: 12, fontWeight: 600, color: theme.t2, display: 'block', marginBottom: 6 }}>كلمة المرور</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                style={{
-                  width: '100%', padding: '12px 14px', borderRadius: 14, fontSize: 13,
-                  background: theme.input, color: theme.t1, border: `1.5px solid ${theme.borderMd}`,
-                  outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
-                  direction: 'ltr', textAlign: 'left',
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  style={{
+                    width: '100%', padding: '12px 14px 12px 44px', borderRadius: 14, fontSize: 13,
+                    background: theme.input, color: theme.t1, border: `1.5px solid ${theme.borderMd}`,
+                    outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+                    direction: 'ltr', textAlign: 'left',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(p => !p)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                    color: theme.t3, fontSize: 16, lineHeight: 1,
+                  }}
+                  title={showPw ? 'إخفاء' : 'إظهار'}
+                >
+                  {showPw ? '🙈' : '👁'}
+                </button>
+              </div>
               {mode === 'signup' && (
                 <p style={{ fontSize: 11, color: theme.t3, marginTop: 5 }}>يجب أن تكون 6 أحرف على الأقل</p>
               )}
