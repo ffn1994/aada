@@ -38,6 +38,7 @@ export default function HabitCard({
             : theme.shadow,
         opacity: isDragging ? 0.4 : isScheduled === false ? 0.45 : 1,
         cursor: draggable ? 'grab' : 'pointer',
+        touchAction: 'pan-y',
       }}
     >
       {/* Drag grip */}
