@@ -15,6 +15,9 @@ export default function App() {
 
   const theme = isDark ? DARK : LIGHT;
 
+  // sync body background so iOS overscroll area matches app
+  document.body.style.background = theme.bg;
+
   function toggleTheme() {
     setIsDark(d => {
       const next = !d;
